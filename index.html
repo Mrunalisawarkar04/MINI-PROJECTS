@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RideShare — Mobility Dashboard</title>
+<link rel="preconnect" href="https://unpkg.com">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{--ink:#172923;--muted:#748078;--green:#1f6b52;--mint:#e7f3ec;--paper:#f5f7f3;--line:#e2e8e1;--orange:#e99a50}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input,select{font:inherit}button{cursor:pointer;border:0;border-radius:10px;padding:10px 13px;font-weight:650}
+.app{max-width:1440px;margin:auto;padding:22px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;gap:14px}.brand{display:flex;gap:12px;align-items:center}.logo{width:44px;height:44px;background:var(--green);border-radius:14px;color:white;display:grid;place-items:center;font-size:22px}.brand h1{font-size:20px;margin:0;letter-spacing:-.5px}.brand p{margin:2px 0 0;color:var(--muted);font-size:12px}.pill{background:#e4f2e9;color:#216447;padding:7px 11px;border-radius:99px;font-size:12px;font-weight:700}.layout{display:grid;grid-template-columns:340px minmax(0,1fr);gap:18px}.panel,.map-panel{background:white;border:1px solid var(--line);border-radius:18px;box-shadow:0 4px 18px #203b2a08}.side{padding:18px}.section-title{display:flex;align-items:center;justify-content:space-between;margin:0 0 13px}.section-title h2{font-size:15px;margin:0}.small{font-size:12px;color:var(--muted)}.tabs{display:flex;background:#f0f4ef;padding:4px;border-radius:12px;margin-bottom:16px}.tabs button{flex:1;background:transparent;color:var(--muted);padding:9px}.tabs button.active{background:white;color:var(--green);box-shadow:0 1px 4px #0000000c}.field{display:block;margin:12px 0}.field span{display:block;font-size:12px;color:#647168;margin-bottom:6px;font-weight:650}.field input,.field select{width:100%;padding:11px 12px;border:1px solid #dfe6df;border-radius:10px;background:white;color:var(--ink);outline:none}.field input:focus,.field select:focus{border-color:#68a68a;box-shadow:0 0 0 3px #dff1e6}.primary{width:100%;background:var(--green);color:white;margin-top:6px}.secondary{background:#edf4ef;color:var(--green)}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:15px}.metric{padding:14px;background:white;border:1px solid var(--line);border-radius:14px}.metric .num{font-size:23px;font-weight:750;letter-spacing:-.7px}.metric .label{font-size:11px;color:var(--muted);margin-top:2px}.map-panel{overflow:hidden}.map-head{display:flex;align-items:center;justify-content:space-between;padding:17px 18px;gap:10px}.map-head h2{font-size:15px;margin:0}.map-head p{margin:3px 0 0;font-size:12px;color:var(--muted)}#map{height:430px;background:#e8eee8}.map-legend{display:flex;gap:14px;flex-wrap:wrap;padding:12px 18px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}.bottom{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}.list-panel{padding:18px;min-height:200px}.list-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.list-head h2{font-size:15px;margin:0}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;font-size:12px}th{text-align:left;color:var(--muted);font-weight:650;padding:9px 8px;border-bottom:1px solid var(--line)}td{padding:10px 8px;border-bottom:1px solid #f0f2ef}tr:last-child td{border-bottom:0}.status{display:inline-block;border-radius:99px;padding:4px 8px;font-size:11px;font-weight:700}.available{background:#e4f5e9;color:#247148}.busy{background:#fff0df;color:#99591d}.empty{color:var(--muted);padding:20px 8px;text-align:center}.toast{position:fixed;right:22px;bottom:22px;max-width:360px;background:#183c2e;color:white;padding:13px 16px;border-radius:12px;box-shadow:0 8px 30px #0002;opacity:0;transform:translateY(8px);pointer-events:none;transition:.2s;z-index:9999}.toast.show{opacity:1;transform:translateY(0)}.foot{color:var(--muted);font-size:11px;margin:16px 2px 0}.ride-row{cursor:pointer}.ride-row:hover{background:#f6faf6}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.bottom{grid-template-columns:1fr}.app{padding:12px}.top{align-items:flex-start}#map{height:360px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand"><div class="logo">↗</div><div><h1>RideShare</h1><p>Driver & passenger matching dashboard</p></div></div>
+    <div class="pill">● Prototype · Demo data</div>
+  </header>
+  <div class="layout">
+    <aside class="panel side">
+      <div class="section-title"><h2>Quick actions</h2><span class="small">Manage rides</span></div>
+      <div class="tabs"><button id="tabRide" class="active" onclick="switchMode('ride')">Request ride</button><button id="tabDriver" onclick="switchMode('driver')">Add driver</button></div>
+      <div id="rideForm">
+        <label class="field"><span>Passenger</span><select id="passengerSelect"></select></label>
+        <label class="field"><span>Pickup location</span><select id="pickupSelect"></select></label>
+        <label class="field"><span>Destination</span><select id="destinationSelect"></select></label>
+        <button class="primary" onclick="requestRide()">Find nearest driver&nbsp; →</button>
+      </div>
+      <div id="driverForm" hidden>
+        <label class="field"><span>Driver ID</span><input id="driverId" placeholder="e.g. D104"></label>
+        <label class="field"><span>Driver name</span><input id="driverName" placeholder="e.g. Aarya"></label>
+        <label class="field"><span>Current location</span><select id="driverLocation"></select></label>
+        <button class="primary" onclick="addDriver()">Register driver&nbsp; +</button>
+      </div>
+      <hr style="border:0;border-top:1px solid var(--line);margin:20px 0">
+      <div class="section-title"><h2>Network overview</h2><button class="secondary" onclick="showNetwork()">View roads</button></div>
+      <div class="small">Five demo locations connected by weighted roads. Driver matching uses shortest road distance, not straight-line distance.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px" id="locationChips"></div>
+      <p class="foot">Demo locations are illustrative, not live GPS. Map tiles require an internet connection.</p>
+    </aside>
+    <main>
+      <div class="metrics">
+        <div class="metric"><div class="num" id="driverCount">3</div><div class="label">Registered drivers</div></div>
+        <div class="metric"><div class="num" id="availableCount">3</div><div class="label">Available now</div></div>
+        <div class="metric"><div class="num" id="pendingCount">0</div><div class="label">Pending requests</div></div>
+      </div>
+      <section class="map-panel">
+        <div class="map-head"><div><h2>Live matching map</h2><p>Choose a pickup and destination to preview a ride</p></div><button class="secondary" onclick="fitMap()">Fit map</button></div>
+        <div id="map"></div>
+        <div class="map-legend"><span><i class="dot" style="background:#23845b"></i>Available driver</span><span><i class="dot" style="background:#e99a50"></i>Busy driver</span><span><i class="dot" style="background:#326be0"></i>Pickup / destination</span><span><i class="dot" style="background:#8c68cc"></i>Selected route</span></div>
+      </section>
+    </main>
+  </div>
+  <div class="bottom">
+    <section class="panel list-panel"><div class="list-head"><h2>Drivers</h2><span class="small">Availability updates automatically</span></div><div class="table-wrap"><table><thead><tr><th>ID</th><th>Driver</th><th>Location</th><th>Status</th></tr></thead><tbody id="driversBody"></tbody></table></div></section>
+    <section class="panel list-panel"><div class="list-head"><h2>Ride activity</h2><button class="secondary" onclick="completeSelected()">Complete selected</button></div><div class="table-wrap"><table><thead><tr><th>Ride</th><th>Passenger</th><th>Driver</th><th>Status</th></tr></thead><tbody id="ridesBody"></tbody></table></div><div id="pendingText" class="small" style="margin-top:10px"></div></section>
+  </div>
+  <p class="foot">Teaching prototype: map interaction and sample workflow for demonstration. The C program remains responsible for the required Graph, Queue, Hashing and shortest-path algorithms in the final implementation.</p>
+</div>
+<div class="toast" id="toast"></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const locations = {
+ A:{name:"A · Central",lat:21.1458,lng:79.0882},
+ B:{name:"B · Civil Lines",lat:21.1570,lng:79.0790},
+ C:{name:"C · Sitabuldi",lat:21.1450,lng:79.0800},
+ D:{name:"D · Dharampeth",lat:21.1360,lng:79.0670},
+ E:{name:"E · Medical Sq.",lat:21.1300,lng:79.0900}
+};
+const roads = {A:{B:4,C:7},B:{A:4,C:2,D:5},C:{A:7,B:2,D:3,E:6},D:{B:5,C:3,E:2},E:{C:6,D:2}};
+let drivers=[
+ {id:"D101",name:"Rahul",loc:"B",available:true},
+ {id:"D102",name:"Neha",loc:"D",available:true},
+ {id:"D103",name:"Kabir",loc:"E",available:true}
+];
+let passengers=[
+ {id:"P201",name:"Priya",loc:"A"},
+ {id:"P202",name:"Aarav",loc:"C"},
+ {id:"P203",name:"Meera",loc:"E"}
+];
+let rides=[],pending=[],nextRide=1,selectedRide=null,markers=[],routeLine=null,placeMarkers={};
+const map=L.map('map',{zoomControl:true}).setView([21.145,79.081],13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
+function markerIcon(color,label){return L.divIcon({className:'',html:`<div style="width:29px;height:29px;border:3px solid white;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${color};box-shadow:0 2px 8px #0003;display:grid;place-items:center"><span style="transform:rotate(45deg);color:white;font-size:10px;font-weight:800">${label}</span></div>`,iconSize:[29,29],iconAnchor:[14,27]})}
+function setupMap(){Object.entries(locations).forEach(([k,l])=>{placeMarkers[k]=L.circleMarker([l.lat,l.lng],{radius:6,color:'#fff',weight:2,fillColor:'#326be0',fillOpacity:.95}).addTo(map).bindTooltip(l.name);});drawDrivers();drawRoadHints(); }
+function drawRoadHints(){Object.entries(roads).forEach(([a,links])=>Object.keys(links).forEach(b=>{if(a<b)L.polyline([[locations[a].lat,locations[a].lng],[locations[b].lat,locations[b].lng]],{color:'#8ea99a',weight:2,dashArray:'5 7',opacity:.7}).addTo(map).bindTooltip(`${a} ↔ ${b}: ${links[b]} units`)}))}
+function drawDrivers(){markers.forEach(m=>map.removeLayer(m));markers=[];drivers.forEach(d=>{const m=L.marker([locations[d.loc].lat,locations[d.loc].lng],{icon:markerIcon(d.available?'#23845b':'#e99a50',d.id.slice(-2))}).addTo(map).bindPopup(`<b>${d.name}</b><br>${d.id}<br>Location ${d.loc}<br>${d.available?'Available':'On a ride'}`);markers.push(m)})}
+function fillSelect(id,items,selected){const el=document.getElementById(id);el.innerHTML=items.map(([v,t])=>`<option value="${v}">${t}</option>`).join('');if(selected)el.value=selected}
+function initSelects(){fillSelect('passengerSelect',passengers.map(p=>[p.id,`${p.name} (${p.id})`]));fillSelect('pickupSelect',Object.entries(locations).map(([k,l])=>[k,l.name]),'A');fillSelect('destinationSelect',Object.entries(locations).map(([k,l])=>[k,l.name]),'E');fillSelect('driverLocation',Object.entries(locations).map(([k,l])=>[k,l.name]));document.getElementById('locationChips').innerHTML=Object.entries(locations).map(([k,l])=>`<button class="secondary" style="padding:6px 9px;font-size:11px" onclick="focusLocation('${k}')">${k} · ${l.name.split('·')[1]}</button>`).join('')}
+function shortest(start,end){let dist={},prev={},visited=new Set();Object.keys(locations).forEach(k=>dist[k]=Infinity);dist[start]=0;while(visited.size<Object.keys(locations).length){let u=null;Object.keys(dist).forEach(k=>{if(!visited.has(k)&&(u===null||dist[k]<dist[u]))u=k});if(u===null||dist[u]===Infinity)break;visited.add(u);Object.entries(roads[u]||{}).forEach(([v,w])=>{if(dist[u]+w<dist[v]){dist[v]=dist[u]+w;prev[v]=u}})}let path=[end];while(path[0]!==start&&prev[path[0]])path.unshift(prev[path[0]]);return {distance:dist[end],path:path[0]===start?path:[]}}
+function matchRequest(req){let choices=drivers.filter(d=>d.available).map(d=>({...d,...shortest(req.pickup,d.loc)})).sort((a,b)=>a.distance-b.distance||a.id.localeCompare(b.id));if(!choices.length)return false;const d=drivers.find(x=>x.id===choices[0].id);d.available=false;rides.push({id:'R'+req.id,passenger:req.passenger,driver:d.id,pickup:req.pickup,dest:req.dest,distance:choices[0].distance,path:choices[0].path,status:'Matched'});selectedRide='R'+req.id;showRoute(req.pickup,req.dest,choices[0].path);notify(`Ride R${req.id} matched with ${d.name}. Driver is ${choices[0].distance} road units from pickup.`);return true}
+function requestRide(){const p=passengers.find(x=>x.id===document.getElementById('passengerSelect').value),pickup=document.getElementById('pickupSelect').value,dest=document.getElementById('destinationSelect').value;if(pickup===dest){notify('Choose different pickup and destination locations.');return}if(rides.some(r=>r.passenger===p.id&&r.status==='Matched')||pending.some(r=>r.passenger===p.id)){notify('This passenger already has an active or pending request.');return}const req={id:nextRide++,passenger:p.id,pickup,dest};p.loc=pickup;if(!matchRequest(req)){pending.push(req);notify(`No driver available. Request R${req.id} added to the FIFO queue.`)}refresh()}
+function addDriver(){const id=document.getElementById('driverId').value.trim().toUpperCase(),name=document.getElementById('driverName').value.trim(),loc=document.getElementById('driverLocation').value;if(!id||!name){notify('Enter a driver ID and name.');return}if(drivers.some(d=>d.id===id)){notify('That driver ID already exists.');return}drivers.push({id,name,loc,available:true});document.getElementById('driverId').value='';document.getElementById('driverName').value='';refresh();notify(`Driver ${name} registered at location ${loc}.`)}
+function completeSelected(){let r=rides.find(x=>x.id===selectedRide&&x.status==='Matched');if(!r){notify('Select an active ride from Ride activity first.');return}r.status='Completed';const d=drivers.find(x=>x.id===r.driver);d.available=true;d.loc=r.dest;notify(`${r.id} completed. ${d.name} is available at ${r.dest}.`);while(pending.length){const req=pending[0];if(!matchRequest(req))break;pending.shift()}refresh()}
+function showRoute(pickup,dest,path){if(routeLine)map.removeLayer(routeLine);const pts=[pickup,...path.slice(1),dest].filter((v,i,a)=>i===0||v!==a[i-1]);routeLine=L.polyline(pts.map(k=>[locations[k].lat,locations[k].lng]),{color:'#8c68cc',weight:5,opacity:.85}).addTo(map);map.fitBounds(routeLine.getBounds().pad(.25))}
+function refresh(){document.getElementById('driverCount').textContent=drivers.length;document.getElementById('availableCount').textContent=drivers.filter(d=>d.available).length;document.getElementById('pendingCount').textContent=pending.length;document.getElementById('driversBody').innerHTML=drivers.map(d=>`<tr><td><b>${d.id}</b></td><td>${d.name}</td><td>${d.loc}</td><td><span class="status ${d.available?'available':'busy'}">${d.available?'Available':'On ride'}</span></td></tr>`).join('');document.getElementById('ridesBody').innerHTML=rides.length?rides.map(r=>`<tr class="ride-row" onclick="selectRide('${r.id}')"><td><b>${r.id}</b></td><td>${r.passenger}</td><td>${r.driver}</td><td><span class="status ${r.status==='Matched'?'busy':'available'}">${r.status}</span></td></tr>`).join(''):'<tr><td colspan="4" class="empty">No rides yet. Request a ride to start the demo.</td></tr>';document.getElementById('pendingText').textContent=pending.length?'Queue (FIFO): '+pending.map(r=>r.id+' · '+r.passenger).join(' → '):'No pending requests.';fillSelect('passengerSelect',passengers.map(p=>[p.id,`${p.name} (${p.id})`]));drawDrivers()}
+function selectRide(id){selectedRide=id;const r=rides.find(x=>x.id===id);if(r){showRoute(r.pickup,r.dest,r.path);notify(`${id} selected. Use “Complete selected” to finish it.`)}}
+function switchMode(mode){document.getElementById('rideForm').hidden=mode!=='ride';document.getElementById('driverForm').hidden=mode!=='driver';document.getElementById('tabRide').classList.toggle('active',mode==='ride');document.getElementById('tabDriver').classList.toggle('active',mode==='driver')}
+function focusLocation(k){map.setView([locations[k].lat,locations[k].lng],15);placeMarkers[k].openTooltip()}
+function fitMap(){map.fitBounds(Object.values(locations).map(l=>[l.lat,l.lng]).concat(drivers.map(d=>[locations[d.loc].lat,locations[d.loc].lng])).map(x=>x))}
+function showNetwork(){notify('Road network: A–B 4, A–C 7, B–C 2, B–D 5, C–D 3, C–E 6, D–E 2.');}
+let toastTimer;function notify(s){const t=document.getElementById('toast');t.textContent=s;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3500)}
+setupMap();initSelects();refresh();setTimeout(()=>map.invalidateSize(),200);
+</script>
+</body></html>
